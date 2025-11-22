@@ -1,7 +1,7 @@
 ---
 
 - name: Join worker node to the cluster
-  ansible.builtin.command: >
+  ansible.builtin.shell: >
     {{ hostvars['192.168.0.196']['kube_join_cmd'] }}
   when: hostvars['192.168.0.196']['kube_join_cmd'] is defined
   args:
