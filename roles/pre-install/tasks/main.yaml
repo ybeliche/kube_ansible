@@ -34,6 +34,9 @@
     regexp: '^([^#].*\s+swap\s+.*)$'
     replace: '# \1'
 
+- name: Disable swap immediately
+  ansible.builtin.command: swapoff -a
+
 - name: Download Kubernetes Release.key
   ansible.builtin.get_url:
     url: https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key
