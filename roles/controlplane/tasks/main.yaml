@@ -9,7 +9,7 @@
 
 - name: Extract kubeadm join command
   ansible.builtin.set_fact:
-    kube_join_cmd: "{{ kube_init.stdout | regex_search('kubeadm join .*', multiline=True) }}"
+    kube_join_cmd: "{{ kube_init.stdout | regex_search('kubeadm join(.|\\n)*', multiline=True) | regex_replace('\\s+',' ') | trim }}"
 
 - name: Create .kube directory for current user
   ansible.builtin.file:
