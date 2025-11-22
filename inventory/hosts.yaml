@@ -2,13 +2,13 @@ all:
   children:
     controlplane:
       hosts:
-        192.168.0.196:
+        192.168.0.105:
           hostname: controlplane
     workers:
       hosts:
-        192.168.0.134:
+        192.168.0.116:
           hostname: worker1
-        192.168.0.198:
+        192.168.0.177:
           hostname: worker2
-        192.168.0.112:
+        192.168.0.121:
           hostname: worker3
