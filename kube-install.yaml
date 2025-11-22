@@ -1,0 +1,19 @@
+---
+
+- name: Minimal Kubernetes Cluster pre install
+  hosts: all
+  roles:
+    - pre-install
+  become: true
+
+- name: Minimal Kubernetes Cluster controlplane
+  hosts: controlplane
+  roles:
+    - controlplane
+  become: true
+
+- name: Minimal Kubernetes Cluster workers
+  hosts: workers
+  roles:
+    - workers
+  become: true

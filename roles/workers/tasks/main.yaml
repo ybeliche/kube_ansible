@@ -1,0 +1,8 @@
+---
+
+- name: Join worker node to the cluster
+  ansible.builtin.command: >
+    {{ hostvars['controlplane']['kube_join_cmd'] }} --cri-socket=unix:///run/containerd/containerd.sock
+  when: hostvars['controlplane']['kube_join_cmd'] is defined
+  args:
+    creates: /etc/kubernetes/kubelet.conf

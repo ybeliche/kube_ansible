@@ -1,0 +1,43 @@
+---
+
+- name: Initialize Kubernetes control plane (kubeadm)
+  ansible.builtin.command: >
+    kubeadm init
+    --pod-network-cidr={{ pod_network_cidr }}
+    --cri-socket=unix:///run/containerd/containerd.sock
+  args:
+    creates: /etc/kubernetes/admin.conf
+  register: kube_init
+
+- name: Extract kubeadm join command
+  ansible.builtin.set_fact:
+    kube_join_cmd: "{{ kube_init.stdout | regex_search('kubeadm join .*', multiline=True) }}"
+
+- name: Create .kube directory for current user
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Copy kubeconfig to user directory
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Apply Calico CNI
+  ansible.builtin.command: >
+    kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+  environment:
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+
+- name: Fetch admin.conf to local machine
+  ansible.builtin.fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: ./kubeconfigs/admin.conf
+    flat: yes

@@ -1,0 +1,79 @@
+---
+
+- name: Set hostname
+  ansible.builtin.hostname:
+    name: "{{ hostname }}"
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install required packages
+  ansible.builtin.apt:
+    name: "{{ required_packages }}"
+
+- name: Create required dirs
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - { path: /etc/containerd }
+    - { path: /etc/apt/keyrings }
+
+- name: Copy containerd config
+  ansible.builtin.template:
+    src: templates/container.config.toml.j2
+    dest: /etc/containerd/config.toml
+    mode: '0644'
+  notify: restart containerd
+
+- name: Disable swap permanently
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\s+swap\s+.*)$'
+    replace: '# \1'
+
+- name: Download Kubernetes Release.key
+  ansible.builtin.get_url:
+    url: https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key
+    dest: /etc/apt/keyrings/kubernetes-release.key
+    mode: '0644'
+
+- name: Dearmor Kubernetes release key
+  ansible.builtin.shell: |
+    gpg --dearmor < /etc/apt/keyrings/kubernetes-release.key \
+      > /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Add Kubernetes repository
+  ansible.builtin.apt_repository:
+    repo:  "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /"
+    state: present
+    update_cache: yes
+
+- name: Install kube components
+  ansible.builtin.apt:
+    name:
+      - "kubelet={{ kube_version }}"
+      - "kubeadm={{ kube_version }}"
+      - "kubectl={{ kube_version }}"
+    update_cache: yes
+    state: present
+
+- name: Hold kube components at current version
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Enable IPv4 forwarding at runtime and persistently
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    state: present
+    reload: yes

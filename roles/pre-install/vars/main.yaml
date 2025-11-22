@@ -1,0 +1,10 @@
+---
+required_packages:
+  - containerd
+  - apt-transport-https 
+  - ca-certificates 
+  - curl 
+  - gpg
+kube_version: 1.33.2-1.1
+
+containerd_sandbox_image: registry.k8s.io/pause:3.10
