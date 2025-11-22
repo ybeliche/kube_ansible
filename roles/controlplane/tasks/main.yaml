@@ -5,8 +5,6 @@
     kubeadm init
     --pod-network-cidr={{ pod_network_cidr }}
     --cri-socket=unix:///run/containerd/containerd.sock
-  args:
-    creates: /etc/kubernetes/admin.conf
   register: kube_init
 
 - name: Extract kubeadm join command
@@ -34,7 +32,7 @@
   ansible.builtin.command: >
     kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+    KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
 
 - name: Fetch admin.conf to local machine
   ansible.builtin.fetch:
